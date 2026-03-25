@@ -1,0 +1,205 @@
+---
+Script name: Coldwater_patch_3D_tutorial.qmd
+Author: A. Y. Baynes
+Contact: abaynes@umass.edu
+
+Objective: Show how coldwater patch size
+Data source: Flume project
+Output: 
+- 3D scatterplot figures of coldwater patch tempeature
+- 3D isosurface figures of coldwater patch temperature
+- Volume under the isosurface (volume of coldwater patch)
+
+Table of contents:
+ 0. Load libraries
+ 1. 3D coldwater patch seep flow rate 10.6L/min
+---
+
+# 0. Load Libraries
+
+## 0. Load Libraries
+
+### 0. Load Libraries
+
+*load libraries*
+
+**load libraries**
+
+load libraries
+
+```{r setup, include=FALSE}
+rm(list = ls())
+
+library(tidyr)
+library(dplyr)
+library(plotly)
+library(here)
+here()
+```
+
+# 1. Seep flow rate 10.6L/min
+
+```{r}
+# Read in .csv files
+pts_3D <- read.csv(here("Data","Thermocouple","3D_20260304_run1.csv"))
+pts_3D_barrier <- read.csv(here("Data","Thermocouple","3D_20260309_run1_barrier.csv"))
+
+# Look at the structure of the dataframe
+str(pts_3D)
+```
+
+### 3D CWP Run1
+
+```{r}
+plot_ly(    # Use plotly figures
+  pts_3D,   # Identify the dataframe to be used
+  x = ~cross_section,    # Identify which columns are the x, y, and z axis
+  y = ~longitudinal,
+  z = ~depth,
+  color = ~Temperature,   # Identify which column to use to color the figure
+  type = "scatter3d",     # Type of figure (scatterplot)
+  mode = "markers",       # Draw individual points (rather than connecting them with lines)
+  marker = list(size = 6) # Sets the diameter of those points to 6 pixels
+) %>%
+  layout(                 # Organized titles, axes etc
+    scene = list(         # A container specifically for 3D plot settings
+      xaxis = list(
+        title = "Cross Section",    # x-axis title
+        range = c(max(pts_3D$cross_section), min(pts_3D$cross_section))  # reversed axis
+      ),
+      yaxis = list(title = "Longitudinal"),    # y-axis title
+      zaxis = list(title = "Depth")            # z-axis title
+    )
+  )
+```
+
+**3D CWP Run1 isosurface**
+
+Missing . Remeasured exact points
+
+```{r}
+plot_ly(
+  pts_3D,                # Identify the dataframe to be used
+  x = ~cross_section,    # Identify which columns are the x, y, and z axis
+  y = ~longitudinal,
+  z = ~depth,
+  value = ~Temperature,   # Identify which column to use to color the figure
+  type = "isosurface",    # Type of figure (isosurface)
+  isomin = 20,            # isomin and isomax sets the range of the data you want to visualize
+  isomax = 22,            
+  surface_count = 2,      # Number of isosurfaces wanted between your min and max
+  caps = list(            # show = FALSE for x, y, and z, hides the "end caps" of the volume. It creates a hollow shell rather than a solid block when it hits the boundaries of your plot
+    x = list(show = FALSE),
+    y = list(show = FALSE),
+    z = list(show = FALSE)
+  )
+) %>%
+  layout(                 # Organized titles, axes etc
+    scene = list(         # A container specifically for 3D plot settings
+      xaxis = list(
+        title = "Cross Section",              # x-axis title
+        range = c(max(pts_3D$cross_section), min(pts_3D$cross_section)) ),   # reversed axis
+      yaxis = list(title = "Longitudinal"),   # y-axis title
+      zaxis = list(title = "Depth")           # z-axis title
+    )
+  )
+```
+
+**Area under isosurface**
+
+```{r}
+# Determines voxel volume (size of one unit in cm3)
+d_cross_section <- diff(sort(unique(pts_3D$cross_section)))[1]
+d_longitudinal <- diff(sort(unique(pts_3D$longitudinal)))[1]
+d_depth <- diff(sort(unique(pts_3D$depth)))[1]
+
+voxel_volume <- d_cross_section * d_longitudinal * d_depth
+
+# Set temperature threshold
+threshold <- 22
+
+# Volume under isosurface
+volume <- pts_3D %>%
+  filter(Temperature <= threshold) %>%
+  nrow() * voxel_volume
+volume
+```
+
+
+
+### 3D CWP Run1 barrier
+
+```{r}
+plot_ly(
+  pts_3D_barrier,
+  x = ~cross_section,
+  y = ~longitudinal,
+  z = ~depth,
+  color = ~Temperature,
+  type = "scatter3d",
+  mode = "markers",
+  marker = list(size = 6)
+) %>%
+  layout(
+    scene = list(
+      xaxis = list(
+        title = "Cross Section",
+        range = c(max(pts_3D_barrier$cross_section), min(pts_3D_barrier$cross_section))  # reversed
+      ),
+      yaxis = list(title = "Longitudinal"),
+      zaxis = list(title = "Depth")
+    )
+  )
+```
+
+**3D CWP Run1 barrier isosurface**
+
+Missing . Remeasured exact points
+
+```{r}
+plot_ly(
+  pts_3D_barrier,
+  x = ~cross_section,
+  y = ~longitudinal,
+  z = ~depth,
+  value = ~Temperature,
+  type = "isosurface",
+  isomin = 20,
+  isomax = 22,
+  surface_count = 2,
+  caps = list(
+    x = list(show = FALSE),
+    y = list(show = FALSE),
+    z = list(show = FALSE)
+  )
+) %>%
+  layout(
+    scene = list(
+      xaxis = list(
+        title = "Cross Section",
+        range = c(max(pts_3D_barrier$cross_section), min(pts_3D_barrier$cross_section)) ),
+      yaxis = list(title = "Longitudinal"),
+      zaxis = list(title = "Depth")
+    )
+  )
+```
+
+**Area under isosurface**
+
+```{r}
+# Determines voxel volume (size of one unit in cm3)
+d_cross_section <- diff(sort(unique(pts_3D_barrier$cross_section)))[1]
+d_longitudinal <- diff(sort(unique(pts_3D_barrier$longitudinal)))[1]
+d_depth <- diff(sort(unique(pts_3D_barrier$depth)))[1]
+
+voxel_volume <- d_cross_section * d_longitudinal * d_depth
+
+# Set temperature threshold
+threshold <- 22
+
+# Volume under isosurface
+volume <- pts_3D_barrier %>%
+  filter(Temperature <= threshold) %>%
+  nrow() * voxel_volume
+volume
+```
